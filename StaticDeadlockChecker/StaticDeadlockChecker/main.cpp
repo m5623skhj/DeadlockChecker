@@ -10,6 +10,7 @@
 #include <source_location>
 #include <algorithm>
 #include <ranges>
+#include <optional>
 
 struct LockDependency
 {
@@ -73,7 +74,19 @@ public:
         }
     }
 
-    void PrintStatistics()
+    [[nodiscard]]
+    bool HasLock(const uintptr_t lockId) const
+    {
+        std::lock_guard guard(trackerMutex);
+        const auto it = currentLocksPerThread.find(std::this_thread::get_id());
+        if (it == currentLocksPerThread.end())
+            return false;
+
+        const auto& locks = it->second;
+        return std::ranges::find(locks, lockId) != locks.end();
+    }
+
+    void PrintStatistics() const
     {
         std::lock_guard guard(trackerMutex);
         std::cout << "Total Dependencies : " << dependencies.size() << "\n";
@@ -85,17 +98,9 @@ private:
     {
         for (const auto& dep : dependencies)
         {
-            if (dep.fromLock == lockId)
-            {
-                return dep.fromName;
-            }
-
-            if (dep.toLock == lockId)
-            {
-                return dep.toName;
-            }
+            if (dep.fromLock == lockId) return dep.fromName;
+            if (dep.toLock == lockId) return dep.toName;
         }
-
         return "unknown";
     }
 
@@ -136,9 +141,9 @@ private:
         recStack.insert(node);
         path.push_back(node);
 
-        if (graph.contains(node))
+        if (const auto it = graph.find(node); it != graph.end())
         {
-            for (uintptr_t neighbor : graph.at(node))
+            for (uintptr_t neighbor : it->second)
             {
                 if (recStack.contains(neighbor))
                 {
@@ -154,6 +159,7 @@ private:
 
         recStack.erase(node);
         path.pop_back();
+
         return false;
     }
 
@@ -167,11 +173,11 @@ private:
             const uintptr_t toLock = cyclePath[i + 1];
 
             const LockDependency* dep = nullptr;
-            for (const auto& d : dependencies)
+            for (const auto& dependency : dependencies)
             {
-                if (d.fromLock == fromLock && d.toLock == toLock)
+                if (dependency.fromLock == fromLock && dependency.toLock == toLock)
                 {
-                    dep = &d;
+                    dep = &dependency;
                     break;
                 }
             }
@@ -189,7 +195,7 @@ private:
     }
 
 private:
-    std::mutex trackerMutex;
+    mutable std::mutex trackerMutex;
     std::vector<LockDependency> dependencies;
     std::set<std::pair<uintptr_t, uintptr_t>> depSet;
     std::map<std::thread::id, std::vector<uintptr_t>> currentLocksPerThread;
@@ -213,9 +219,47 @@ public:
         GlobalLockOrderTracker::GetInstance().RecordLockRelease(reinterpret_cast<uintptr_t>(this));
     }
 
+    std::mutex& Inner()
+    {
+	    return inner;
+    }
+
 private:
     std::string lockName;
     std::mutex inner;
+};
+
+class TrackedLockGuard
+{
+public:
+    explicit TrackedLockGuard(TrackedMutexWrapper& mutex, const std::source_location& loc = std::source_location::current())
+        : target(mutex)
+        , acquired(false)
+    {
+        const auto lockId = reinterpret_cast<uintptr_t>(&target);
+        if (const auto& tracker = GlobalLockOrderTracker::GetInstance(); tracker.HasLock(lockId))
+        {
+            std::cout << "[Warning] Duplicate lock attempt ignored on: " << loc.file_name() << ":" << loc.line() << "\n";
+            return;
+        }
+
+        target.Lock(loc);
+        guard.emplace(target.Inner());
+        acquired = true;
+    }
+
+    ~TrackedLockGuard()
+    {
+        if (acquired)
+        {
+            target.Unlock();
+        }
+    }
+
+private:
+    TrackedMutexWrapper& target;
+    std::optional<std::lock_guard<std::mutex>> guard;
+    bool acquired;
 };
 
 struct TestStruct1
@@ -236,29 +280,26 @@ namespace
         TestStruct1 t1_1;
         TestStruct2 t2;
 
-        t1.mutex.Lock();
-        t1_1.mutex.Lock();
-        t2.mutex.Lock();
-        t2.mutex.Unlock();
-        t1_1.mutex.Unlock();
-        t1.mutex.Unlock();
+        {
+            TrackedLockGuard g1(t1.mutex);
+            TrackedLockGuard g2(t1_1.mutex);
+            TrackedLockGuard g3(t2.mutex);
+        }
 
-        t1.mutex.Lock();
-        t2.mutex.Lock();
-        t1.mutex.Lock();
-        t2.mutex.Unlock();
-        t1.mutex.Unlock();
+        {
+            TrackedLockGuard g1(t1.mutex);
+            TrackedLockGuard g2(t2.mutex);
+        }
 
-		t1.mutex.Lock();
-		t1_1.mutex.Lock();
-        t1.mutex.Lock();
-		t1_1.mutex.Unlock();
-		t1.mutex.Unlock();
+        {
+            TrackedLockGuard g1(t1.mutex);
+            TrackedLockGuard g2(t1_1.mutex);
+        }
 
-		t1_1.mutex.Lock();
-		t1_1.mutex.Lock();
-		t1_1.mutex.Unlock();
-		t1_1.mutex.Unlock();
+        {
+            TrackedLockGuard g1(t1_1.mutex);
+            TrackedLockGuard g2(t1_1.mutex);
+        }
 
         GlobalLockOrderTracker::GetInstance().PrintStatistics();
     }
@@ -268,6 +309,5 @@ int main()
 {
     std::cout << "Running static deadlock detection test...\n";
     Test();
-
     return 0;
 }
