@@ -22,7 +22,7 @@
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{26d56834-4e04-43e2-90c5-07cb5be4a07c}</ProjectGuid>
-    <RootNamespace>StaticDeadlockChecker</RootNamespace>
+    <RootNamespace>DeadlockChecker</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
