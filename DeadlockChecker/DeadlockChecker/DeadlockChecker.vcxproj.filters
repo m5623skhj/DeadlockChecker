@@ -21,6 +21,9 @@
     <ClCompile Include="TestLock.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="DeadlockChecker.cpp">
+      <Filter>헤더 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="TestScenario1.h">
@@ -29,5 +32,8 @@
     <ClInclude Include="TraceLock.h">
       <Filter>소스 파일</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="DeadlockChecker.h" />
   </ItemGroup>
 </Project>

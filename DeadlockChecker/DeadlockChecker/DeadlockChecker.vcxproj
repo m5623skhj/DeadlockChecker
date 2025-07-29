@@ -128,12 +128,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="DeadlockChecker.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="TestLock.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="TestScenario1.h" />
     <ClInclude Include="TraceLock.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="DeadlockChecker.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
