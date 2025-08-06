@@ -13,16 +13,19 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="DeadlockChecker">
+      <UniqueIdentifier>{5fc69408-d36e-4b10-9f5a-a905c6ca4986}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="TestLock.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="DeadlockChecker.cpp">
-      <Filter>헤더 파일</Filter>
+      <Filter>DeadlockChecker</Filter>
+    </ClCompile>
+    <ClCompile Include="TraceLock.cpp">
+      <Filter>DeadlockChecker</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -30,10 +33,12 @@
       <Filter>소스 파일</Filter>
     </ClInclude>
     <ClInclude Include="TraceLock.h">
-      <Filter>소스 파일</Filter>
+      <Filter>DeadlockChecker</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="DeadlockChecker.h" />
+    <None Include="DeadlockChecker.h">
+      <Filter>DeadlockChecker</Filter>
+    </None>
   </ItemGroup>
 </Project>

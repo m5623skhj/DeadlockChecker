@@ -130,7 +130,7 @@
   <ItemGroup>
     <ClCompile Include="DeadlockChecker.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="TestLock.cpp" />
+    <ClCompile Include="TraceLock.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="TestScenario1.h" />
