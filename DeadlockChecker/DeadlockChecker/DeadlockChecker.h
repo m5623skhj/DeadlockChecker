@@ -33,7 +33,7 @@ public:
 
 	void InsertThread(std::thread::id threadId);
 	void RemoveThread(std::thread::id threadId);
-	void UpdateThreadRespawnTime(const std::thread::id threadId, const std::chrono::milliseconds respawnTimeMs);
+	void UpdateThreadRespawnTime(const std::thread::id threadId);
 
 private:
 	void RunDeadlockThread();
