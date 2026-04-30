@@ -40,19 +40,19 @@ void DeadlockChecker::RemoveThread(const std::thread::id threadId)
 	threadBeforeRespawnsTimeMap.erase(threadId);
 }
 
-void DeadlockChecker::UpdateThreadRespawnTime(const std::thread::id threadId, const std::chrono::milliseconds respawnTimeMs)
+void DeadlockChecker::UpdateThreadRespawnTime(const std::thread::id threadId)
 {
 	std::scoped_lock lock(threadBeforeRespawnsTimeMapMutex);
-	threadBeforeRespawnsTimeMap[threadId] = std::chrono::steady_clock::now() + respawnTimeMs;
+	threadBeforeRespawnsTimeMap[threadId] = std::chrono::steady_clock::now();
 }
 
 void DeadlockChecker::RunDeadlockThread()
 {
 	std::list<std::pair<std::thread::id, std::chrono::steady_clock::time_point>> deadlockCheckerList;
-	const std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
 
 	while (isRunning)
 	{
+		const std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
 		deadlockCheckerList.clear();
 		{
 			std::scoped_lock lock(threadBeforeRespawnsTimeMapMutex);
